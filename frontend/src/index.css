@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Light theme scrollbar */
+.light ::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+  background-size: 1000px 100%;
+}
+
+.dark .skeleton {
+  background: linear-gradient(to right, #1a1a1a 4%, #2a2a2a 25%, #1a1a1a 36%);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+}
+
+/* Focus styles */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #667eea;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+.dark .spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #667eea;
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply px-6 py-3 bg-gradient-primary text-white font-semibold rounded-lg 
+         hover:shadow-neon transition-all duration-300 
+         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none
+         transform hover:-translate-y-0.5 active:translate-y-0;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 bg-gradient-secondary text-white font-semibold rounded-lg 
+         hover:shadow-lg transition-all duration-300 
+         disabled:opacity-50 disabled:cursor-not-allowed
+         transform hover:-translate-y-0.5 active:translate-y-0;
+}
+
+.btn-outline {
+  @apply px-6 py-3 border-2 border-neon-blue text-neon-blue dark:text-neon-blue font-semibold rounded-lg 
+         hover:bg-neon-blue hover:text-white dark:hover:bg-neon-blue dark:hover:text-white
+         transition-all duration-300 
+         disabled:opacity-50 disabled:cursor-not-allowed
+         transform hover:-translate-y-0.5 active:translate-y-0;
+}
+
+/* Input Field Styles */
+.input-field {
+  @apply w-full px-4 py-3 bg-white dark:bg-dark-elevated 
+         border-2 border-gray-200 dark:border-dark-border 
+         text-gray-900 dark:text-white
+         rounded-lg 
+         focus:outline-none focus:ring-2 focus:ring-neon-blue focus:border-transparent
+         placeholder-gray-400 dark:placeholder-gray-500
+         transition-all duration-300
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Glass Effect */
+.glass-effect {
+  @apply bg-white/90 dark:bg-white/5 backdrop-blur-xl 
+         border border-gray-200 dark:border-white/10
+         shadow-xl;
+}
+
+/* Shake Animation for Error States */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-10px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(10px);
+  }
+}
+
+.shake {
+  animation: shake 0.65s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Pulse Animation for Errors */
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+}
+
+.pulse-error {
+  animation: pulse-red 2s infinite;
+}
+
+/* Smooth scrolling notification animation - truly seamless infinite loop */
+/* With 4 identical copies, we animate exactly 25% (one copy width) */
+/* When animation loops back to 0%, copy 2 is visually in copy 1's position = seamless */
+@keyframes scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-25%, 0, 0);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
