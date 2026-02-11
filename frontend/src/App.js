@@ -59,11 +59,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300 overflow-x-hidden">
       <ScrollToTop />
       <MovingNotification />
-      <FirstTimeVisitorForm 
-        isOpen={showVisitorForm} 
+      <FirstTimeVisitorForm
+        isOpen={showVisitorForm}
         onClose={() => setShowVisitorForm(false)}
         onSuccess={handleFormSuccess}
       />

@@ -88,7 +88,7 @@ const Home = () => {
       {/* Video Modal */}
       <AnimatePresence>
         {showVideoModal && videoId && (
-          <div 
+          <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
             onClick={() => setShowVideoModal(false)}
           >
@@ -129,16 +129,16 @@ const Home = () => {
       </AnimatePresence>
 
       {/* Image Carousel and News Section */}
-      <section className="py-12">
+      <section className="py-12 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Carousel - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 min-w-0 overflow-hidden">
               <ImageCarousel />
             </div>
-            
+
             {/* News Column - Takes 1 column on large screens */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 min-w-0 overflow-hidden">
               <div className="bg-white dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden flex flex-col h-96 md:h-[500px] lg:h-[600px]">
                 <div className="bg-gradient-primary p-4 flex-shrink-0">
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -202,7 +202,7 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 md:py-32">
         <div className="absolute inset-0 bg-gradient-to-br from-neon-blue/20 via-transparent to-neon-purple/20"></div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -216,7 +216,7 @@ const Home = () => {
                 <span className="text-white">with Cutting-Edge Courses</span>
               </h1>
               <p className="text-gray-400 text-lg mb-8">
-                Join thousands of learners mastering new skills with our futuristic education platform. 
+                Join thousands of learners mastering new skills with our futuristic education platform.
                 Learn from industry experts and get certified in the most in-demand technologies.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -228,7 +228,7 @@ const Home = () => {
                   <FiArrowRight className="w-5 h-5" />
                 </Link>
                 {demoVideoUrl && (
-                  <button 
+                  <button
                     onClick={handleWatchDemo}
                     className="px-8 py-4 border-2 border-neon-blue text-neon-blue font-semibold rounded-lg hover:bg-neon-blue hover:text-white transition-all flex items-center justify-center space-x-2"
                   >
@@ -413,7 +413,7 @@ const Home = () => {
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 mb-6 italic leading-relaxed flex-grow line-clamp-4">"{testimonial.content}"</p>
                     <div className="flex items-center space-x-3 mt-auto">
-                      <Avatar 
+                      <Avatar
                         name={testimonial.user?.name || 'Anonymous'}
                         src={testimonial.user?.avatar}
                         size="md"
@@ -519,34 +519,34 @@ const Home = () => {
 
       {/* CTA Section - Only visible when user is not logged in */}
       {!isAuthenticated && (
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-gradient-primary p-12 rounded-2xl text-center"
-          >
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              Ready to Start Learning?
-            </h2>
-            <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-              Join thousands of students and begin your journey to success today
-            </p>
-            <Link
-              to="/register"
-              className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-neon-blue font-semibold rounded-lg hover:shadow-lg transition-all"
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-gradient-primary p-12 rounded-2xl text-center"
             >
-              <span>Get Started Free</span>
-              <FiArrowRight className="w-5 h-5" />
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                Ready to Start Learning?
+              </h2>
+              <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
+                Join thousands of students and begin your journey to success today
+              </p>
+              <Link
+                to="/register"
+                className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-neon-blue font-semibold rounded-lg hover:shadow-lg transition-all"
+              >
+                <span>Get Started Free</span>
+                <FiArrowRight className="w-5 h-5" />
+              </Link>
+            </motion.div>
+          </div>
+        </section>
       )}
 
       {/* Add Testimonial Modal */}
-      <AddTestimonialModal 
+      <AddTestimonialModal
         isOpen={showTestimonialModal}
         onClose={() => setShowTestimonialModal(false)}
         onSuccess={fetchData}

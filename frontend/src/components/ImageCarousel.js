@@ -41,7 +41,7 @@ const ImageCarousel = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full"
       >
-        <div className="relative h-96 md:h-[500px] lg:h-[600px] w-full rounded-xl overflow-hidden bg-gradient-to-br from-neon-blue/20 via-neon-purple/20 to-neon-pink/20">
+        <div className="relative h-96 md:h-[500px] lg:h-[600px] w-full max-w-full rounded-xl overflow-hidden bg-gradient-to-br from-neon-blue/20 via-neon-purple/20 to-neon-pink/20">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center p-8">
               <h2 className="text-4xl md:text-6xl font-bold gradient-text mb-4">
@@ -70,7 +70,7 @@ const ImageCarousel = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full"
+      className="w-full max-w-full"
     >
       <Swiper
         modules={[Autoplay, Pagination, Navigation, EffectFade]}
@@ -88,7 +88,7 @@ const ImageCarousel = () => {
         }}
         navigation={true}
         loop={true}
-        className="rounded-xl overflow-hidden shadow-2xl"
+        className="rounded-xl overflow-hidden shadow-2xl max-w-full"
         style={{
           '--swiper-navigation-color': '#667eea',
           '--swiper-pagination-color': '#667eea',
