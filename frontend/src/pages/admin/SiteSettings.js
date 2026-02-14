@@ -26,13 +26,13 @@ const SiteSettings = () => {
         api.get('/settings/movingNotification'),
         api.get('/settings/movingNotificationSpeed')
       ]);
-      
+
       if (videoResponse.status === 'fulfilled') {
         setDemoVideoUrl(videoResponse.value.data.value || '');
       } else {
         console.log('Demo video setting not found');
       }
-      
+
       if (notificationResponse.status === 'fulfilled') {
         const value = notificationResponse.value.data.value || '';
         // Handle both string (legacy), object, and array formats
@@ -109,7 +109,7 @@ const SiteSettings = () => {
             link: n.link || null
           };
         });
-      
+
       await Promise.all([
         api.put('/settings/movingNotification', { value: validNotifications }),
         api.put('/settings/movingNotificationSpeed', { value: notificationSpeed })
@@ -180,6 +180,15 @@ const SiteSettings = () => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  // Ensure URLs have a protocol so they don't resolve as relative paths
+  const normalizeUrl = (url) => {
+    if (!url) return url;
+    if (!/^https?:\/\//i.test(url)) {
+      return 'https://' + url;
+    }
+    return url;
   };
 
   const videoId = getYouTubeVideoId(demoVideoUrl);
@@ -358,9 +367,9 @@ const SiteSettings = () => {
                             {typeof notification === 'string' ? notification : (notification.text || '(Empty)')}
                           </p>
                           {typeof notification === 'object' && notification.link && (
-                            <a 
-                              href={notification.link} 
-                              target="_blank" 
+                            <a
+                              href={normalizeUrl(notification.link)}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-xs text-neon-blue hover:underline mt-1 block"
                             >
@@ -428,75 +437,54 @@ const SiteSettings = () => {
               const text = typeof n === 'string' ? n : (n.text || '');
               return text && text.trim() !== '';
             }) && (
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-dark-border">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Preview:</h3>
-                <div className="bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink text-white py-2 px-4 rounded overflow-hidden">
-                  <div className="flex animate-scroll whitespace-nowrap">
-                    {movingNotifications
-                      .filter(n => {
-                        const text = typeof n === 'string' ? n : (n.text || '');
-                        return text && text.trim() !== '';
-                      })
-                      .map((notification, index) => {
-                        const text = typeof notification === 'string' ? notification : notification.text;
-                        const link = typeof notification === 'object' ? notification.link : null;
-                        return (
-                          <React.Fragment key={index}>
-                            {link ? (
-                              <a 
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-block px-4 font-medium text-sm underline hover:text-white/80"
-                              >
-                                {text}
-                              </a>
-                            ) : (
-                              <span className="inline-block px-4 font-medium text-sm">
-                                {text}
-                              </span>
-                            )}
-                            <span className="inline-block px-4 font-medium text-sm text-white/50">
-                              •
-                            </span>
-                          </React.Fragment>
-                        );
-                      })}
-                    {/* Duplicate for seamless loop */}
-                    {movingNotifications
-                      .filter(n => {
-                        const text = typeof n === 'string' ? n : (n.text || '');
-                        return text && text.trim() !== '';
-                      })
-                      .map((notification, index) => {
-                        const text = typeof notification === 'string' ? notification : notification.text;
-                        const link = typeof notification === 'object' ? notification.link : null;
-                        return (
-                          <React.Fragment key={`dup-${index}`}>
-                            {link ? (
-                              <a 
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-block px-4 font-medium text-sm underline hover:text-white/80"
-                              >
-                                {text}
-                              </a>
-                            ) : (
-                              <span className="inline-block px-4 font-medium text-sm">
-                                {text}
-                              </span>
-                            )}
-                            <span className="inline-block px-4 font-medium text-sm text-white/50">
-                              •
-                            </span>
-                          </React.Fragment>
-                        );
-                      })}
+                <div className="mt-6 p-4 bg-gray-50 dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-dark-border">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Preview:</h3>
+                  <div className="bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink text-white py-2 px-4 rounded overflow-hidden">
+                    {/* eslint-disable-next-line jsx-a11y/no-distracting-elements */}
+                    <marquee
+                      direction="left"
+                      scrollamount={Math.max(2, Math.round(180 / Math.max(2, Math.min(30, 30 / notificationSpeed))))}
+                      behavior="scroll"
+                      onMouseOver={(e) => e.currentTarget.stop()}
+                      onMouseOut={(e) => e.currentTarget.start()}
+                      style={{ width: '100%' }}
+                    >
+                      {movingNotifications
+                        .filter(n => {
+                          const text = typeof n === 'string' ? n : (n.text || '');
+                          return text && text.trim() !== '';
+                        })
+                        .map((notification, index, arr) => {
+                          const text = typeof notification === 'string' ? notification : notification.text;
+                          const link = typeof notification === 'object' ? notification.link : null;
+                          return (
+                            <React.Fragment key={index}>
+                              {link ? (
+                                <a
+                                  href={normalizeUrl(link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block px-4 font-medium text-sm underline hover:text-white/80"
+                                >
+                                  {text}
+                                </a>
+                              ) : (
+                                <span className="inline-block px-4 font-medium text-sm">
+                                  {text}
+                                </span>
+                              )}
+                              {index < arr.length - 1 && (
+                                <span className="inline-block px-4 font-medium text-sm text-white/50">
+                                  •
+                                </span>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                    </marquee>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Save Button */}
             <div className="mt-6">

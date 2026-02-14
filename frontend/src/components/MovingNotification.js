@@ -14,11 +14,11 @@ const MovingNotification = () => {
         api.get('/settings/movingNotification'),
         api.get('/settings/movingNotificationSpeed')
       ]);
-      
+
       // Handle notification data
       if (notificationResponse.status === 'fulfilled') {
         const value = notificationResponse.value.data.value || '';
-        
+
         // Handle both array (new format) and string (legacy format)
         let notificationArray = [];
         if (Array.isArray(value)) {
@@ -51,18 +51,18 @@ const MovingNotification = () => {
         } else {
           console.log('No valid notification data found');
         }
-        
+
         setNotifications(notificationArray);
-        
+
         // Always show if notifications exist (permanent notification)
         const shouldShow = notificationArray.length > 0;
         setIsVisible(shouldShow);
-        
+
         console.log('Notification visibility:', {
           hasNotifications: notificationArray.length > 0,
           shouldShow
         });
-        
+
         if (shouldShow) {
           console.log('✅ Moving notifications will be displayed:', notificationArray);
         } else {
@@ -105,12 +105,12 @@ const MovingNotification = () => {
   useEffect(() => {
     // Fetch notification on mount
     fetchNotification();
-    
+
     // Refresh notification when window regains focus (useful after admin updates)
     const handleFocus = () => {
       fetchNotification();
     };
-    
+
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [fetchNotification]);
@@ -127,7 +127,7 @@ const MovingNotification = () => {
       document.body.style.paddingTop = '0';
       console.log('❌ Notification hidden - removed body padding');
     }
-    
+
     // Cleanup on unmount
     return () => {
       document.documentElement.style.setProperty('--notification-height', '0px');
@@ -152,18 +152,27 @@ const MovingNotification = () => {
     console.log('⏳ Notification component: Still loading...');
     return null;
   }
-  
+
   if (!isVisible) {
     console.log('👁️ Notification component: Not visible (isVisible=false)');
     return null;
   }
-  
+
   if (notifications.length === 0) {
     console.log('📭 Notification component: No notifications to display');
     return null;
   }
 
   console.log('✅ Rendering notification component with', notifications.length, 'notifications');
+
+  // Ensure URLs have a protocol so they don't resolve as relative paths
+  const normalizeUrl = (url) => {
+    if (!url) return url;
+    if (!/^https?:\/\//i.test(url)) {
+      return 'https://' + url;
+    }
+    return url;
+  };
 
   // Normalize notification format (handle both string and object formats)
   const normalizeNotifications = (notifs) => {
@@ -185,7 +194,7 @@ const MovingNotification = () => {
     normalized.forEach((notification, index) => {
       const textElement = notification.link ? (
         <a
-          href={notification.link}
+          href={normalizeUrl(notification.link)}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block px-4 font-medium text-sm md:text-base underline hover:text-white/80 transition-colors"
@@ -200,7 +209,7 @@ const MovingNotification = () => {
           {notification.text}
         </a>
       ) : (
-        <span 
+        <span
           className="inline-block px-4 font-medium text-sm md:text-base"
           style={{
             willChange: 'transform',
@@ -210,17 +219,17 @@ const MovingNotification = () => {
           {notification.text}
         </span>
       );
-      
+
       content.push(
         <React.Fragment key={`text-${index}`}>
           {textElement}
         </React.Fragment>
       );
-      
+
       if (index < normalized.length - 1) {
         content.push(
-          <span 
-            key={`sep-${index}`} 
+          <span
+            key={`sep-${index}`}
             className="inline-block px-4 font-medium text-sm md:text-base text-white/50"
             style={{
               willChange: 'transform',
@@ -235,10 +244,14 @@ const MovingNotification = () => {
     return content;
   };
 
+  // Convert animationDuration (seconds) to marquee scrollamount (pixels per frame)
+  // Lower duration = faster scroll. scrollamount ~= 180 / duration gives a good range.
+  const scrollAmount = Math.max(2, Math.round(180 / animationDuration));
+
   return (
-    <div 
+    <div
       className="fixed top-0 left-0 right-0 bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink text-white py-2 overflow-hidden border-b border-white/20 z-[60] shadow-md"
-      style={{ 
+      style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -247,40 +260,16 @@ const MovingNotification = () => {
         width: '100%'
       }}
     >
-      <div className="flex items-center">
-        {/* Scrolling text */}
-        <div 
-          className="flex-1 overflow-hidden relative"
-          style={{
-            willChange: 'contents',
-            transform: 'translateZ(0)'
-          }}
-        >
-          <div 
-            className="flex hover:[animation-play-state:paused] whitespace-nowrap"
-            style={{
-              willChange: 'transform',
-              animation: `scroll ${animationDuration}s linear infinite`,
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              WebkitFontSmoothing: 'antialiased',
-              MozOsxFontSmoothing: 'grayscale',
-              textRendering: 'optimizeSpeed'
-            }}
-          >
-            {/* Render 4 identical copies for seamless infinite loop */}
-            {/* Animation moves exactly -25% (one copy width) */}
-            {/* When it loops back to 0%, copy 2 is visually in copy 1's position = seamless */}
-            {renderNotificationContent()}
-            <span className="inline-block px-4 font-medium text-sm md:text-base text-white/50">•</span>
-            {renderNotificationContent()}
-            <span className="inline-block px-4 font-medium text-sm md:text-base text-white/50">•</span>
-            {renderNotificationContent()}
-            <span className="inline-block px-4 font-medium text-sm md:text-base text-white/50">•</span>
-            {renderNotificationContent()}
-          </div>
-        </div>
-      </div>
+      <marquee
+        direction="left"
+        scrollamount={scrollAmount}
+        behavior="scroll"
+        onMouseOver={(e) => e.currentTarget.stop()}
+        onMouseOut={(e) => e.currentTarget.start()}
+        style={{ width: '100%' }}
+      >
+        {renderNotificationContent()}
+      </marquee>
     </div>
   );
 };

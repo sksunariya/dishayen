@@ -47,11 +47,10 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors ${
-                  isActive(link.path)
+                className={`text-sm font-medium transition-colors ${isActive(link.path)
                     ? 'text-neon-blue'
                     : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 {link.name}
               </Link>
@@ -184,9 +183,8 @@ const Navbar = () => {
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block py-2 ${
-                    isActive(link.path) ? 'text-neon-blue' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`block py-2 ${isActive(link.path) ? 'text-neon-blue' : 'text-gray-700 dark:text-gray-300'
+                    }`}
                 >
                   {link.name}
                 </Link>
@@ -233,14 +231,16 @@ const Navbar = () => {
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block py-2 text-gray-700 dark:text-gray-300"
+                    className={`block py-2 ${isActive('/login') ? 'text-neon-blue' : 'text-gray-700 dark:text-gray-300'
+                      }`}
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block py-2 text-neon-blue dark:text-neon-blue"
+                    className={`block py-2 ${isActive('/register') ? 'text-neon-blue' : 'text-gray-700 dark:text-gray-300'
+                      }`}
                   >
                     Sign Up
                   </Link>
