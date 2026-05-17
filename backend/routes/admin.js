@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
+const https = require('https');
+const http = require('http');
+const { URL } = require('url');
 const User = require('../models/User');
 const Course = require('../models/Course');
 const Testimonial = require('../models/Testimonial');
@@ -9,31 +11,75 @@ const Review = require('../models/Review');
 const ContactQuery = require('../models/ContactQuery');
 const { protect, admin } = require('../middleware/auth');
 const { sendNotificationEmail } = require('../utils/emailService');
-const cloudinary = require('../config/cloudinary');
-
-// Configure multer for memory storage (for Cloudinary upload)
-const storage = multer.memoryStorage();
-
-// File filter to accept only images
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(file.originalname.toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: fileFilter
-});
 
 // All routes are protected and admin-only
+
+// Fetch Open Graph title and image from a URL
+function fetchPageMetadata(urlStr) {
+  return new Promise((resolve, reject) => {
+    const makeRequest = (currentUrl, redirectCount) => {
+      if (redirectCount > 5) return reject(new Error('Too many redirects'));
+
+      let parsedUrl;
+      try { parsedUrl = new URL(currentUrl); } catch (e) { return reject(new Error('Invalid URL')); }
+
+      const protocol = parsedUrl.protocol === 'https:' ? https : http;
+      const options = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5'
+        },
+        timeout: 15000
+      };
+
+      const req = protocol.request(options, (res) => {
+        if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+          const loc = res.headers.location;
+          const redirectUrl = loc.startsWith('http') ? loc : `${parsedUrl.protocol}//${parsedUrl.hostname}${loc}`;
+          res.resume();
+          return makeRequest(redirectUrl, redirectCount + 1);
+        }
+
+        let html = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          html += chunk;
+          if (html.length > 100000) res.destroy();
+        });
+        res.on('end', () => {
+          let title = '';
+          const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']*?)["']/i)
+            || html.match(/<meta[^>]+content=["']([^"']*?)["'][^>]+property=["']og:title["']/i);
+          if (ogTitle) {
+            title = ogTitle[1].trim();
+          } else {
+            const tagTitle = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            if (tagTitle) title = tagTitle[1].trim();
+          }
+
+          let image = '';
+          const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']*?)["']/i)
+            || html.match(/<meta[^>]+content=["']([^"']*?)["'][^>]+property=["']og:image["']/i);
+          if (ogImage) image = ogImage[1].trim();
+
+          resolve({ title, image });
+        });
+        res.on('error', reject);
+      });
+
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')); });
+      req.end();
+    };
+
+    makeRequest(urlStr, 0);
+  });
+}
 
 // @route   GET /api/admin/dashboard/stats
 // @desc    Get dashboard statistics
@@ -120,6 +166,22 @@ router.get('/dashboard/stats', protect, admin, async (req, res) => {
 
 // COURSE MANAGEMENT
 
+// @route   POST /api/admin/courses/fetch-metadata
+// @desc    Fetch og:title and og:image from a third-party course URL
+// @access  Private/Admin
+router.post('/courses/fetch-metadata', protect, admin, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ message: 'URL is required' });
+
+    const metadata = await fetchPageMetadata(url);
+    res.json({ success: true, ...metadata });
+  } catch (error) {
+    console.error('Fetch metadata error:', error);
+    res.status(500).json({ message: 'Failed to fetch metadata from URL', error: error.message });
+  }
+});
+
 // @route   GET /api/admin/courses/all
 // @desc    Get all courses including archived
 // @access  Private/Admin
@@ -151,77 +213,31 @@ router.get('/courses/all', protect, admin, async (req, res) => {
 });
 
 // @route   POST /api/admin/courses
-// @desc    Create a new course with optional thumbnail upload
+// @desc    Create a new course from a third-party URL
 // @access  Private/Admin
-router.post('/courses', protect, admin, upload.single('thumbnail'), async (req, res) => {
+router.post('/courses', protect, admin, async (req, res) => {
   try {
-    const courseData = { ...req.body };
+    const { url, title, image, category, featured } = req.body;
 
-    // Parse array fields from FormData (they come as requirements[0], requirements[1], etc.)
-    const requirements = [];
-    const whatYouWillLearn = [];
-    
-    Object.keys(req.body).forEach(key => {
-      if (key.startsWith('requirements[')) {
-        requirements.push(req.body[key]);
-      } else if (key.startsWith('whatYouWillLearn[')) {
-        whatYouWillLearn.push(req.body[key]);
-      }
-    });
+    if (!url) return res.status(400).json({ message: 'Course URL is required' });
+    if (!title) return res.status(400).json({ message: 'Course title is required' });
 
-    if (requirements.length > 0) {
-      courseData.requirements = requirements;
-    }
-    if (whatYouWillLearn.length > 0) {
-      courseData.whatYouWillLearn = whatYouWillLearn;
-    }
-
-    // Clean up the requirements[n] and whatYouWillLearn[n] keys
-    Object.keys(courseData).forEach(key => {
-      if (key.startsWith('requirements[') || key.startsWith('whatYouWillLearn[')) {
-        delete courseData[key];
-      }
-    });
-
-    // Handle thumbnail upload to Cloudinary if provided
-    if (req.file) {
-      try {
-        console.log('Starting Cloudinary upload for course thumbnail...');
-        const b64 = Buffer.from(req.file.buffer).toString('base64');
-        const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: 'course-thumbnails',
-          resource_type: 'auto',
-          transformation: [
-            { width: 800, height: 600, crop: 'limit' },
-            { quality: 'auto:low', fetch_format: 'auto' }
-          ],
-          timeout: 120000 // 2 minutes timeout for upload
-        });
-
-        console.log('Cloudinary upload successful:', result.public_id);
-        courseData.image = result.secure_url;
-        courseData.cloudinaryPublicId = result.public_id;
-      } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
-        return res.status(500).json({ 
-          message: 'Failed to upload image to cloud storage',
-          error: uploadError.message 
-        });
-      }
-    }
+    const courseData = {
+      url,
+      title,
+      image: image || 'https://via.placeholder.com/800x600?text=Course+Thumbnail',
+      featured: featured || false
+    };
+    if (category) courseData.category = category;
 
     const course = await Course.create(courseData);
 
-    // Send response immediately
     res.status(201).json({
       success: true,
       message: 'Course created successfully',
       course
     });
 
-    // Notify all users about new course asynchronously (non-blocking)
     setImmediate(async () => {
       try {
         const users = await User.find({ role: 'student' });
@@ -240,95 +256,29 @@ router.post('/courses', protect, admin, upload.single('thumbnail'), async (req, 
     });
   } catch (error) {
     console.error('Create course error:', error);
-    res.status(500).json({ 
-      message: 'Server error', 
-      error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // @route   PUT /api/admin/courses/:id
-// @desc    Update a course with optional thumbnail upload
+// @desc    Update a course
 // @access  Private/Admin
-router.put('/courses/:id', protect, admin, upload.single('thumbnail'), async (req, res) => {
+router.put('/courses/:id', protect, admin, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
 
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    // Parse array fields from FormData (they come as requirements[0], requirements[1], etc.)
-    const requirements = [];
-    const whatYouWillLearn = [];
-    
-    Object.keys(req.body).forEach(key => {
-      if (key.startsWith('requirements[')) {
-        requirements.push(req.body[key]);
-      } else if (key.startsWith('whatYouWillLearn[')) {
-        whatYouWillLearn.push(req.body[key]);
-      }
-    });
-
-    if (requirements.length > 0) {
-      req.body.requirements = requirements;
-    }
-    if (whatYouWillLearn.length > 0) {
-      req.body.whatYouWillLearn = whatYouWillLearn;
-    }
-
-    // Clean up the requirements[n] and whatYouWillLearn[n] keys
-    Object.keys(req.body).forEach(key => {
-      if (key.startsWith('requirements[') || key.startsWith('whatYouWillLearn[')) {
-        delete req.body[key];
-      }
-    });
-
-    // Handle thumbnail upload to Cloudinary if provided
-    if (req.file) {
-      try {
-        console.log('Starting Cloudinary upload for course thumbnail update...');
-        
-        // Delete old image from Cloudinary if it exists
-        if (course.cloudinaryPublicId) {
-          try {
-            await cloudinary.uploader.destroy(course.cloudinaryPublicId);
-            console.log('Old thumbnail deleted from Cloudinary');
-          } catch (err) {
-            console.error('Error deleting old course thumbnail from Cloudinary:', err);
-          }
-        }
-
-        // Upload new image
-        const b64 = Buffer.from(req.file.buffer).toString('base64');
-        const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: 'course-thumbnails',
-          resource_type: 'auto',
-          transformation: [
-            { width: 800, height: 600, crop: 'limit' },
-            { quality: 'auto:low', fetch_format: 'auto' }
-          ],
-          timeout: 120000 // 2 minutes timeout for upload
-        });
-
-        console.log('Cloudinary upload successful:', result.public_id);
-        req.body.image = result.secure_url;
-        req.body.cloudinaryPublicId = result.public_id;
-      } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
-        return res.status(500).json({ 
-          message: 'Failed to upload image to cloud storage',
-          error: uploadError.message 
-        });
-      }
-    }
+    const { url, title, image, category, featured } = req.body;
+    const updates = {};
+    if (url !== undefined) updates.url = url;
+    if (title !== undefined) updates.title = title;
+    if (image !== undefined) updates.image = image;
+    if (featured !== undefined) updates.featured = featured;
+    updates.category = category || null;
 
     const updatedCourse = await Course.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     );
 
@@ -339,11 +289,7 @@ router.put('/courses/:id', protect, admin, upload.single('thumbnail'), async (re
     });
   } catch (error) {
     console.error('Update course error:', error);
-    res.status(500).json({ 
-      message: 'Server error', 
-      error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -412,33 +358,12 @@ router.patch('/courses/:id/restore', protect, admin, async (req, res) => {
 // @access  Private/Admin
 router.delete('/courses/:id', protect, admin, async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findByIdAndDelete(req.params.id);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
 
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    // Delete thumbnail from Cloudinary if it exists
-    if (course.cloudinaryPublicId) {
-      try {
-        await cloudinary.uploader.destroy(course.cloudinaryPublicId);
-        console.log('Course thumbnail deleted from Cloudinary');
-      } catch (err) {
-        console.error('Error deleting course thumbnail from Cloudinary:', err);
-        // Continue with course deletion even if Cloudinary deletion fails
-      }
-    }
-
-    // Delete the course
-    await Course.findByIdAndDelete(req.params.id);
-
-    // Delete all reviews for this course
     await Review.deleteMany({ course: req.params.id });
 
-    res.json({
-      success: true,
-      message: 'Course and associated reviews deleted successfully'
-    });
+    res.json({ success: true, message: 'Course deleted successfully' });
   } catch (error) {
     console.error('Delete course error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

@@ -13,7 +13,6 @@ const Courses = () => {
   const [filters, setFilters] = useState({
     search: '',
     category: searchParams.get('category') || '',
-    level: '',
     sort: '-createdAt'
   });
   const [categories, setCategories] = useState([]);
@@ -49,7 +48,6 @@ const Courses = () => {
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
-      if (filters.level) params.append('level', filters.level);
       params.append('sort', filters.sort);
 
       const response = await api.get(`/courses?${params.toString()}`);
@@ -113,26 +111,12 @@ const Courses = () => {
             </select>
 
             <select
-              value={filters.level}
-              onChange={(e) => handleFilterChange('level', e.target.value)}
-              className="px-4 py-2 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
-            >
-              <option value="">All Levels</option>
-              <option value="Beginner">Beginner</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
-            </select>
-
-            <select
               value={filters.sort}
               onChange={(e) => handleFilterChange('sort', e.target.value)}
               className="px-4 py-2 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
             >
               <option value="-createdAt">Newest First</option>
               <option value="createdAt">Oldest First</option>
-              <option value="-averageRating">Highest Rated</option>
-              <option value="price">Price: Low to High</option>
-              <option value="-price">Price: High to Low</option>
             </select>
           </div>
         </div>
