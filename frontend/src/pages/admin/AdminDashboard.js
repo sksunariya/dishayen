@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiUsers, FiBook, FiDollarSign, FiStar, FiMessageSquare, FiTrendingUp, FiImage, FiMail, FiSettings, FiVideo, FiFolder, FiFileText, FiUserCheck, FiShield, FiGrid } from 'react-icons/fi';
+import { FiUsers, FiBook, FiDollarSign, FiMessageSquare, FiImage, FiMail, FiSettings, FiVideo, FiFolder, FiFileText, FiUserCheck, FiShield, FiGrid } from 'react-icons/fi';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiArrowRight, FiPlay, FiStar, FiTrendingUp, FiAward, FiMessageSquare, FiX } from 'react-icons/fi';
+import { FiArrowRight, FiPlay, FiStar, FiAward, FiMessageSquare, FiX } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
