@@ -6,24 +6,46 @@ import api from '../utils/api';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [categories, setCategories] = useState([]);
+  const [legalPages, setLegalPages] = useState({
+    privacyPolicy:  false,
+    termsOfService: false,
+    cookiePolicy:   false,
+  });
 
   useEffect(() => {
     fetchRandomCategories();
+    fetchLegalPagesStatus();
   }, []);
 
   const fetchRandomCategories = async () => {
     try {
       const response = await api.get('/categories');
       const allCategories = response.data.categories || [];
-      
-      // Shuffle and take first 5 categories
       const shuffled = [...allCategories].sort(() => 0.5 - Math.random());
       setCategories(shuffled.slice(0, 5));
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Fail silently - footer should still display even if categories fail to load
     }
   };
+
+  const fetchLegalPagesStatus = async () => {
+    try {
+      const [pp, tos, cp] = await Promise.allSettled([
+        api.get('/settings/privacyPolicy'),
+        api.get('/settings/termsOfService'),
+        api.get('/settings/cookiePolicy'),
+      ]);
+      setLegalPages({
+        privacyPolicy:  pp.status  === 'fulfilled' && pp.value?.data?.value?.enabled  === true,
+        termsOfService: tos.status === 'fulfilled' && tos.value?.data?.value?.enabled === true,
+        cookiePolicy:   cp.status  === 'fulfilled' && cp.value?.data?.value?.enabled  === true,
+      });
+    } catch (error) {
+      console.error('Error fetching legal pages status:', error);
+    }
+  };
+
+  const hasAnyLegalPage = legalPages.privacyPolicy || legalPages.termsOfService || legalPages.cookiePolicy;
 
   return (
     <footer className="bg-light-surface dark:bg-dark-surface border-t border-light-border dark:border-dark-border mt-20">
@@ -35,26 +57,26 @@ const Footer = () => {
               <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">D</span>
               </div>
-              <span className="text-xl font-bold gradient-text">Dishayen Coaching</span>
+              <span className="text-xl font-bold gradient-text">Dishayen Coaching Center</span>
             </div>
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
               Empowering learners worldwide with quality education and expert coaching.
             </p>
             <div className="flex space-x-4">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" 
-                 className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"
+                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
                 <FiFacebook className="w-5 h-5" />
               </a>
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
-                 className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
                 <FiTwitter className="w-5 h-5" />
               </a>
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"
-                 className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
                 <FiInstagram className="w-5 h-5" />
               </a>
               <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"
-                 className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
                 <FiLinkedin className="w-5 h-5" />
               </a>
             </div>
@@ -94,8 +116,8 @@ const Footer = () => {
               {categories.length > 0 ? (
                 categories.map((category) => (
                   <li key={category._id}>
-                    <Link 
-                      to={`/courses?category=${category._id}`} 
+                    <Link
+                      to={`/courses?category=${category._id}`}
                       className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm flex items-center gap-1"
                     >
                       {category.icon && <span>{category.icon}</span>}
@@ -104,9 +126,7 @@ const Footer = () => {
                   </li>
                 ))
               ) : (
-                <li className="text-gray-600 dark:text-gray-400 text-sm">
-                  Loading categories...
-                </li>
+                <li className="text-gray-600 dark:text-gray-400 text-sm">Loading categories...</li>
               )}
             </ul>
           </div>
@@ -121,13 +141,13 @@ const Footer = () => {
               </li>
               <li className="flex items-center space-x-3 text-gray-600 dark:text-gray-400 text-sm">
                 <FiMail className="w-5 h-5 flex-shrink-0" />
-                <a href="mailto:info@eduplatform.com" className="hover:text-neon-blue dark:hover:text-neon-blue transition-colors">
+                <a href="mailto:info@eduplatform.com" className="hover:text-neon-blue transition-colors">
                   info@eduplatform.com
                 </a>
               </li>
               <li className="flex items-center space-x-3 text-gray-600 dark:text-gray-400 text-sm">
                 <FiPhone className="w-5 h-5 flex-shrink-0" />
-                <a href="tel:+1234567890" className="hover:text-neon-blue dark:hover:text-neon-blue transition-colors">
+                <a href="tel:+1234567890" className="hover:text-neon-blue transition-colors">
                   +1 (234) 567-890
                 </a>
               </li>
@@ -137,21 +157,29 @@ const Footer = () => {
 
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-light-border dark:border-dark-border">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               &copy; {currentYear} Dishayen Coaching Center. All rights reserved.
             </p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm">
-                Terms of Service
-              </Link>
-              <Link to="/cookies" className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm">
-                Cookie Policy
-              </Link>
-            </div>
+            {hasAnyLegalPage && (
+              <div className="flex flex-wrap justify-center gap-6">
+                {legalPages.privacyPolicy && (
+                  <Link to="/privacy" className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm">
+                    Privacy Policy
+                  </Link>
+                )}
+                {legalPages.termsOfService && (
+                  <Link to="/terms" className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm">
+                    Terms of Service
+                  </Link>
+                )}
+                {legalPages.cookiePolicy && (
+                  <Link to="/cookies" className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors text-sm">
+                    Cookie Policy
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -160,4 +188,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

@@ -38,6 +38,10 @@ const ManageVideoTestimonials = lazy(() => import('./pages/admin/ManageVideoTest
 const ManageCategories = lazy(() => import('./pages/admin/ManageCategories'));
 const ManageNews = lazy(() => import('./pages/admin/ManageNews'));
 const ManageVisitorInquiries = lazy(() => import('./pages/admin/ManageVisitorInquiries'));
+const PrivacyPolicy    = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService   = lazy(() => import('./pages/TermsOfService'));
+const CookiePolicy     = lazy(() => import('./pages/CookiePolicy'));
+const ManageLegalPages = lazy(() => import('./pages/admin/ManageLegalPages'));
 
 function App() {
   const [showVisitorForm, setShowVisitorForm] = useState(false);
@@ -82,6 +86,9 @@ function App() {
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
           <Route path="/verify-email-pending" element={<VerifyEmailPending />} />
           <Route path="/auth/google/success" element={<GoogleCallback />} />
+          <Route path="/privacy"  element={<PrivacyPolicy />} />
+          <Route path="/terms"   element={<TermsOfService />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
 
           {/* Protected routes */}
           <Route path="/profile" element={
@@ -159,6 +166,11 @@ function App() {
           <Route path="/admin/visitor-inquiries" element={
             <AdminRoute>
               <ManageVisitorInquiries />
+            </AdminRoute>
+          } />
+          <Route path="/admin/legal" element={
+            <AdminRoute>
+              <ManageLegalPages />
             </AdminRoute>
           } />
         </Routes>

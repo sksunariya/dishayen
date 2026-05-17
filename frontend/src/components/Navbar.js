@@ -38,7 +38,7 @@ const Navbar = () => {
             <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="text-xl font-bold gradient-text">Dishayen Coaching</span>
+            <span className="text-xl font-bold gradient-text">Dishayen Coaching Center</span>
           </Link>
 
           {/* Desktop Navigation */}

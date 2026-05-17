@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiUsers, FiBook, FiDollarSign, FiStar, FiMessageSquare, FiTrendingUp, FiImage, FiMail, FiSettings, FiVideo, FiFolder, FiFileText, FiUserCheck } from 'react-icons/fi';
+import { FiUsers, FiBook, FiDollarSign, FiStar, FiMessageSquare, FiTrendingUp, FiImage, FiMail, FiSettings, FiVideo, FiFolder, FiFileText, FiUserCheck, FiShield } from 'react-icons/fi';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -184,6 +184,15 @@ const AdminDashboard = () => {
             <FiUserCheck className="w-8 h-8 text-teal-500 mb-4" />
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Visitor Inquiries</h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">View and manage first-time visitor forms</p>
+          </Link>
+
+          <Link
+            to="/admin/legal"
+            className="bg-white dark:bg-dark-elevated p-6 rounded-xl border border-gray-200 dark:border-dark-border hover:border-neon-blue shadow-lg hover:shadow-xl transition-all"
+          >
+            <FiShield className="w-8 h-8 text-neon-blue mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Legal Pages</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Manage Privacy Policy, Terms of Service &amp; Cookie Policy</p>
           </Link>
         </div>
 

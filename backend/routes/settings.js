@@ -31,14 +31,10 @@ router.get('/', async (req, res) => {
 router.get('/:key', async (req, res) => {
   try {
     const setting = await Settings.findOne({ key: req.params.key });
-    
-    if (!setting) {
-      return res.status(404).json({ message: 'Setting not found' });
-    }
 
     res.json({
       success: true,
-      value: setting.value
+      value: setting ? setting.value : null
     });
   } catch (error) {
     console.error('Get setting error:', error);

@@ -55,10 +55,7 @@ const SiteSettings = () => {
           setMovingNotifications([]);
         }
       } else {
-        // Setting doesn't exist yet, that's fine
-        if (notificationResponse.reason?.response?.status !== 404) {
-          console.error('Error fetching notification:', notificationResponse.reason);
-        }
+        console.error('Error fetching notification:', notificationResponse.reason);
         setMovingNotifications([]);
       }
 

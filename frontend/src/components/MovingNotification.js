@@ -69,9 +69,7 @@ const MovingNotification = () => {
           console.log('❌ Moving notifications will NOT be displayed. Reason: No notifications set');
         }
       } else {
-        if (notificationResponse.reason?.response?.status !== 404) {
-          console.error('Error fetching notification:', notificationResponse.reason);
-        }
+        console.error('Error fetching notification:', notificationResponse.reason);
         setNotifications([]);
         setIsVisible(false);
       }
