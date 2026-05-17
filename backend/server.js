@@ -36,11 +36,13 @@ const { setupCleanupJobs } = require('./utils/cleanup');
 const app = express();
 
 // Security middleware with custom CSP for images
+const s3BucketUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`;
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "blob:", "http://localhost:5000", "http://localhost:3000", "https://res.cloudinary.com"],
+      "img-src": ["'self'", "data:", "blob:", "http://localhost:5000", "http://localhost:3000", s3BucketUrl],
+      "media-src": ["'self'", "blob:", s3BucketUrl],
     },
   },
   crossOriginResourcePolicy: { policy: "cross-origin" },

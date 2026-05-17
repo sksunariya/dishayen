@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const VideoTestimonial = require('../models/VideoTestimonial');
 const { protect, admin } = require('../middleware/auth');
-const cloudinary = require('../config/cloudinary');
+const { uploadToS3, deleteFromS3 } = require('../config/s3');
 
 // Configure multer for video uploads
 const storage = multer.memoryStorage();
@@ -93,19 +93,12 @@ router.post('/', protect, admin, upload.single('video'), async (req, res) => {
         return res.status(400).json({ message: 'Please upload a video file' });
       }
 
-      // Upload to Cloudinary
-      const b64 = Buffer.from(req.file.buffer).toString('base64');
-      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-      const result = await cloudinary.uploader.upload(dataURI, {
-        folder: 'video-testimonials',
-        resource_type: 'video',
-        timeout: 180000 // 3 minutes
-      });
-
-      videoData.videoUrl = result.secure_url;
-      videoData.cloudinaryPublicId = result.public_id;
-      videoData.thumbnail = result.thumbnail_url || null;
+      // Upload to S3
+      const ext = req.file.originalname.split('.').pop();
+      const key = `video-testimonials/${Date.now()}.${ext}`;
+      videoData.videoUrl = await uploadToS3(req.file.buffer, key, req.file.mimetype);
+      videoData.cloudinaryPublicId = key;
+      videoData.thumbnail = null;
     } 
     // Handle YouTube URL
     else if (type === 'youtube') {
@@ -179,14 +172,12 @@ router.delete('/:id', protect, admin, async (req, res) => {
       return res.status(404).json({ message: 'Video testimonial not found' });
     }
 
-    // Delete video from Cloudinary if it's an uploaded video
+    // Delete video from S3 if it's an uploaded video
     if (videoTestimonial.type === 'upload' && videoTestimonial.cloudinaryPublicId) {
       try {
-        await cloudinary.uploader.destroy(videoTestimonial.cloudinaryPublicId, {
-          resource_type: 'video'
-        });
+        await deleteFromS3(videoTestimonial.cloudinaryPublicId);
       } catch (err) {
-        console.error('Error deleting video from Cloudinary:', err);
+        console.error('Error deleting video from S3:', err);
       }
     }
 

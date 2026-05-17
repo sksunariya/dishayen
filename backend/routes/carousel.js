@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const CarouselImage = require('../models/CarouselImage');
 const { protect, admin } = require('../middleware/auth');
-const cloudinary = require('../config/cloudinary');
+const { uploadToS3, deleteFromS3 } = require('../config/s3');
 
 // Configure multer for memory storage (for Cloudinary upload)
 const storage = multer.memoryStorage();
@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
 });
 
 // @route   POST /api/carousel
-// @desc    Add new carousel image with Cloudinary upload (Admin only)
+// @desc    Add new carousel image with S3 upload (Admin only)
 // @access  Private/Admin
 router.post('/', protect, admin, upload.single('image'), async (req, res) => {
   try {
@@ -62,23 +62,15 @@ router.post('/', protect, admin, upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'Please upload an image' });
     }
 
-    // Upload image to Cloudinary
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder: 'carousel',
-      resource_type: 'auto',
-      transformation: [
-        { width: 1920, height: 1080, crop: 'limit' },
-        { quality: 'auto', fetch_format: 'auto' }
-      ]
-    });
+    // Upload image to S3
+    const ext = req.file.originalname.split('.').pop();
+    const key = `carousel/${Date.now()}.${ext}`;
+    const imageUrl = await uploadToS3(req.file.buffer, key, req.file.mimetype);
 
     const image = await CarouselImage.create({
       title,
-      imageUrl: result.secure_url,
-      cloudinaryPublicId: result.public_id,
+      imageUrl,
+      cloudinaryPublicId: key,
       description: description || '',
       linkUrl: linkUrl || '',
       order: order ? parseInt(order) : 0
@@ -115,7 +107,7 @@ router.get('/all', protect, admin, async (req, res) => {
 });
 
 // @route   PUT /api/carousel/:id
-// @desc    Update carousel image with optional Cloudinary upload (Admin only)
+// @desc    Update carousel image with optional S3 upload (Admin only)
 // @access  Private/Admin
 router.put('/:id', protect, admin, upload.single('image'), async (req, res) => {
   try {
@@ -127,32 +119,22 @@ router.put('/:id', protect, admin, upload.single('image'), async (req, res) => {
       return res.status(404).json({ message: 'Carousel image not found' });
     }
 
-    // If new image is uploaded, update on Cloudinary
+    // If new image is uploaded, replace on S3
     if (req.file) {
-      // Delete old image from Cloudinary if it exists
+      // Delete old image from S3 if it exists
       if (image.cloudinaryPublicId) {
         try {
-          await cloudinary.uploader.destroy(image.cloudinaryPublicId);
+          await deleteFromS3(image.cloudinaryPublicId);
         } catch (err) {
-          console.error('Error deleting old carousel image from Cloudinary:', err);
+          console.error('Error deleting old carousel image from S3:', err);
         }
       }
 
-      // Upload new image
-      const b64 = Buffer.from(req.file.buffer).toString('base64');
-      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-      const result = await cloudinary.uploader.upload(dataURI, {
-        folder: 'carousel',
-        resource_type: 'auto',
-        transformation: [
-          { width: 1920, height: 1080, crop: 'limit' },
-          { quality: 'auto', fetch_format: 'auto' }
-        ]
-      });
-
-      image.imageUrl = result.secure_url;
-      image.cloudinaryPublicId = result.public_id;
+      // Upload new image to S3
+      const ext = req.file.originalname.split('.').pop();
+      const key = `carousel/${Date.now()}.${ext}`;
+      image.imageUrl = await uploadToS3(req.file.buffer, key, req.file.mimetype);
+      image.cloudinaryPublicId = key;
     }
 
     // Update other fields
@@ -176,7 +158,7 @@ router.put('/:id', protect, admin, upload.single('image'), async (req, res) => {
 });
 
 // @route   DELETE /api/carousel/:id
-// @desc    Delete carousel image and remove from Cloudinary (Admin only)
+// @desc    Delete carousel image and remove from S3 (Admin only)
 // @access  Private/Admin
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
@@ -186,12 +168,12 @@ router.delete('/:id', protect, admin, async (req, res) => {
       return res.status(404).json({ message: 'Carousel image not found' });
     }
 
-    // Delete image from Cloudinary if it exists
+    // Delete image from S3 if it exists
     if (image.cloudinaryPublicId) {
       try {
-        await cloudinary.uploader.destroy(image.cloudinaryPublicId);
+        await deleteFromS3(image.cloudinaryPublicId);
       } catch (err) {
-        console.error('Error deleting carousel image from Cloudinary:', err);
+        console.error('Error deleting carousel image from S3:', err);
       }
     }
 

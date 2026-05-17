@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const cloudinary = require('../config/cloudinary');
+const { uploadToS3, deleteFromS3 } = require('../config/s3');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
@@ -90,7 +90,7 @@ router.put('/profile', protect, async (req, res) => {
 });
 
 // @route   POST /api/users/upload-avatar
-// @desc    Upload profile picture to Cloudinary
+// @desc    Upload profile picture to S3
 // @access  Private
 router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res) => {
   try {
@@ -101,40 +101,31 @@ router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res)
     // Get user to delete old avatar if it exists
     const user = await User.findById(req.user.id);
     
-    // Delete old avatar from Cloudinary if it exists
+    // Delete old avatar from S3 if it exists
     if (user.cloudinaryPublicId) {
       try {
-        await cloudinary.uploader.destroy(user.cloudinaryPublicId);
+        await deleteFromS3(user.cloudinaryPublicId);
       } catch (err) {
-        console.error('Error deleting old avatar from Cloudinary:', err);
+        console.error('Error deleting old avatar from S3:', err);
         // Continue even if deletion fails
       }
     }
 
-    // Upload to Cloudinary
-    // Convert buffer to base64
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder: 'avatars',
-      resource_type: 'auto',
-      transformation: [
-        { width: 500, height: 500, crop: 'fill', gravity: 'face' },
-        { quality: 'auto', fetch_format: 'auto' }
-      ]
-    });
+    // Upload to S3
+    const ext = req.file.originalname.split('.').pop();
+    const key = `avatars/${Date.now()}.${ext}`;
+    const avatarUrl = await uploadToS3(req.file.buffer, key, req.file.mimetype);
 
     // Update user avatar
-    user.avatar = result.secure_url;
-    user.cloudinaryPublicId = result.public_id;
+    user.avatar = avatarUrl;
+    user.cloudinaryPublicId = key;
     await user.save();
 
     res.json({
       success: true,
       message: 'Avatar uploaded successfully',
-      avatarUrl: result.secure_url,
-      cloudinaryPublicId: result.public_id
+      avatarUrl,
+      cloudinaryPublicId: key
     });
   } catch (error) {
     console.error('Upload avatar error:', error);
