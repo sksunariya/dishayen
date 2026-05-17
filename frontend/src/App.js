@@ -42,6 +42,8 @@ const PrivacyPolicy    = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService   = lazy(() => import('./pages/TermsOfService'));
 const CookiePolicy     = lazy(() => import('./pages/CookiePolicy'));
 const ManageLegalPages = lazy(() => import('./pages/admin/ManageLegalPages'));
+const Results = lazy(() => import('./pages/Results'));
+const ManageResults = lazy(() => import('./pages/admin/ManageResults'));
 
 function App() {
   const [showVisitorForm, setShowVisitorForm] = useState(false);
@@ -79,6 +81,7 @@ function App() {
           <Route path="/courses" element={<Courses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/results" element={<Results />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -171,6 +174,11 @@ function App() {
           <Route path="/admin/legal" element={
             <AdminRoute>
               <ManageLegalPages />
+            </AdminRoute>
+          } />
+          <Route path="/admin/results" element={
+            <AdminRoute>
+              <ManageResults />
             </AdminRoute>
           } />
         </Routes>

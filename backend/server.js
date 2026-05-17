@@ -26,6 +26,7 @@ const videoTestimonialRoutes = require('./routes/videoTestimonials');
 const categoryRoutes = require('./routes/categories');
 const newsRoutes = require('./routes/news');
 const visitorInquiryRoutes = require('./routes/visitorInquiries');
+const resultsRoutes = require('./routes/results');
 
 // Import passport config
 require('./config/passport');
@@ -140,6 +141,7 @@ app.use('/api/video-testimonials', videoTestimonialRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/visitor-inquiries', visitorInquiryRoutes);
+app.use('/api/results', resultsRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
