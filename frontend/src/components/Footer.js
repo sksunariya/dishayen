@@ -6,6 +6,7 @@ import api from '../utils/api';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [categories, setCategories] = useState([]);
+  const [contactInfo, setContactInfo] = useState({});
   const [legalPages, setLegalPages] = useState({
     privacyPolicy:  false,
     termsOfService: false,
@@ -15,7 +16,19 @@ const Footer = () => {
   useEffect(() => {
     fetchRandomCategories();
     fetchLegalPagesStatus();
+    fetchContactInfo();
   }, []);
+
+  const fetchContactInfo = async () => {
+    try {
+      const response = await api.get('/settings/contactInfo');
+      if (response.data?.value) {
+        setContactInfo(response.data.value);
+      }
+    } catch (error) {
+      console.error('Error fetching contact info:', error);
+    }
+  };
 
   const fetchRandomCategories = async () => {
     try {
@@ -63,22 +76,30 @@ const Footer = () => {
               Empowering learners worldwide with quality education and expert coaching.
             </p>
             <div className="flex space-x-4">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
-                <FiFacebook className="w-5 h-5" />
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
-                <FiTwitter className="w-5 h-5" />
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
-                <FiInstagram className="w-5 h-5" />
-              </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
-                <FiLinkedin className="w-5 h-5" />
-              </a>
+              {contactInfo.facebook && (
+                <a href={contactInfo.facebook} target="_blank" rel="noopener noreferrer"
+                  className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                  <FiFacebook className="w-5 h-5" />
+                </a>
+              )}
+              {contactInfo.twitter && (
+                <a href={contactInfo.twitter} target="_blank" rel="noopener noreferrer"
+                  className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                  <FiTwitter className="w-5 h-5" />
+                </a>
+              )}
+              {contactInfo.instagram && (
+                <a href={contactInfo.instagram} target="_blank" rel="noopener noreferrer"
+                  className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                  <FiInstagram className="w-5 h-5" />
+                </a>
+              )}
+              {contactInfo.linkedin && (
+                <a href={contactInfo.linkedin} target="_blank" rel="noopener noreferrer"
+                  className="text-gray-600 dark:text-gray-400 hover:text-neon-blue transition-colors">
+                  <FiLinkedin className="w-5 h-5" />
+                </a>
+              )}
             </div>
           </div>
 
@@ -135,22 +156,28 @@ const Footer = () => {
           <div>
             <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-3">
-              <li className="flex items-start space-x-3 text-gray-600 dark:text-gray-400 text-sm">
-                <FiMapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>123 Education Street, Tech City, TC 12345</span>
-              </li>
-              <li className="flex items-center space-x-3 text-gray-600 dark:text-gray-400 text-sm">
-                <FiMail className="w-5 h-5 flex-shrink-0" />
-                <a href="mailto:info@eduplatform.com" className="hover:text-neon-blue transition-colors">
-                  info@eduplatform.com
-                </a>
-              </li>
-              <li className="flex items-center space-x-3 text-gray-600 dark:text-gray-400 text-sm">
-                <FiPhone className="w-5 h-5 flex-shrink-0" />
-                <a href="tel:+1234567890" className="hover:text-neon-blue transition-colors">
-                  +1 (234) 567-890
-                </a>
-              </li>
+              {contactInfo.address && (
+                <li className="flex items-start space-x-3 text-gray-600 dark:text-gray-400 text-sm">
+                  <FiMapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span>{contactInfo.address}</span>
+                </li>
+              )}
+              {contactInfo.email && (
+                <li className="flex items-center space-x-3 text-gray-600 dark:text-gray-400 text-sm">
+                  <FiMail className="w-5 h-5 flex-shrink-0" />
+                  <a href={`mailto:${contactInfo.email}`} className="hover:text-neon-blue transition-colors">
+                    {contactInfo.email}
+                  </a>
+                </li>
+              )}
+              {contactInfo.phone && (
+                <li className="flex items-center space-x-3 text-gray-600 dark:text-gray-400 text-sm">
+                  <FiPhone className="w-5 h-5 flex-shrink-0" />
+                  <a href={`tel:${contactInfo.phone.replace(/\s+/g, '')}`} className="hover:text-neon-blue transition-colors">
+                    {contactInfo.phone}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

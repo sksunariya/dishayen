@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiSave, FiYoutube, FiPlay, FiBell, FiPlus, FiTrash2, FiEdit2, FiX, FiLink } from 'react-icons/fi';
+import { FiSave, FiYoutube, FiPlay, FiBell, FiPlus, FiTrash2, FiEdit2, FiX, FiLink, FiMapPin, FiMail, FiPhone, FiShare2 } from 'react-icons/fi';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const SiteSettings = () => {
   const [demoVideoUrl, setDemoVideoUrl] = useState('');
+  const [contactInfo, setContactInfo] = useState({
+    address: '',
+    email: '',
+    phone: '',
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+  });
+  const [savingContact, setSavingContact] = useState(false);
   const [movingNotifications, setMovingNotifications] = useState([]);
   const [notificationSpeed, setNotificationSpeed] = useState(5); // Default speed: 5 (medium)
   const [editingIndex, setEditingIndex] = useState(null);
@@ -21,10 +31,11 @@ const SiteSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      const [videoResponse, notificationResponse, speedResponse] = await Promise.allSettled([
+      const [videoResponse, notificationResponse, speedResponse, contactResponse] = await Promise.allSettled([
         api.get('/settings/demoVideoUrl'),
         api.get('/settings/movingNotification'),
-        api.get('/settings/movingNotificationSpeed')
+        api.get('/settings/movingNotificationSpeed'),
+        api.get('/settings/contactInfo'),
       ]);
 
       if (videoResponse.status === 'fulfilled') {
@@ -66,6 +77,10 @@ const SiteSettings = () => {
           setNotificationSpeed(speed);
         }
       }
+
+      if (contactResponse.status === 'fulfilled' && contactResponse.value?.data?.value) {
+        setContactInfo(prev => ({ ...prev, ...contactResponse.value.data.value }));
+      }
     } catch (error) {
       console.error('Fetch settings error:', error);
     } finally {
@@ -83,6 +98,19 @@ const SiteSettings = () => {
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveContact = async () => {
+    setSavingContact(true);
+    try {
+      await api.put('/settings/contactInfo', { value: contactInfo });
+      toast.success('Contact info saved successfully!');
+    } catch (error) {
+      console.error('Save contact info error:', error);
+      toast.error('Failed to save contact info');
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -261,6 +289,95 @@ const SiteSettings = () => {
               >
                 <FiSave className="w-5 h-5" />
                 {saving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
+
+          {/* Contact Info Section */}
+          <div className="bg-white dark:bg-dark-elevated p-8 rounded-xl border border-gray-200 dark:border-dark-border shadow-lg mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <FiMapPin className="w-8 h-8 text-neon-purple" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Information</h2>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              This information is displayed in the footer of every page.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <FiMapPin className="w-4 h-4" /> Address
+                </label>
+                <input
+                  type="text"
+                  value={contactInfo.address}
+                  onChange={(e) => setContactInfo(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="123 Education Street, Tech City, TC 12345"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <FiMail className="w-4 h-4" /> Email
+                  </label>
+                  <input
+                    type="email"
+                    value={contactInfo.email}
+                    onChange={(e) => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="info@example.com"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <FiPhone className="w-4 h-4" /> Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={contactInfo.phone}
+                    onChange={(e) => setContactInfo(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+1 (234) 567-890"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <FiShare2 className="w-4 h-4" /> Social Media Links
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/yourpage' },
+                    { key: 'twitter', label: 'Twitter / X', placeholder: 'https://twitter.com/yourhandle' },
+                    { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourprofile' },
+                    { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yourcompany' },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key}>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{label}</label>
+                      <input
+                        type="url"
+                        value={contactInfo[key]}
+                        onChange={(e) => setContactInfo(prev => ({ ...prev, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={handleSaveContact}
+                disabled={savingContact}
+                className="w-full px-6 py-3 bg-gradient-primary text-white font-semibold rounded-lg hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <FiSave className="w-5 h-5" />
+                {savingContact ? 'Saving...' : 'Save Contact Info'}
               </button>
             </div>
           </div>
