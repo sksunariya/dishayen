@@ -84,7 +84,7 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>
-                <Link
+                {/* <Link
                   to="/my-courses"
                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-elevated transition-colors relative"
                   title="My Courses"
@@ -95,7 +95,7 @@ const Navbar = () => {
                       {user.purchasedCourses.length}
                     </span>
                   )}
-                </Link>
+                </Link> */}
 
                 {/* Profile dropdown */}
                 <div className="relative">
