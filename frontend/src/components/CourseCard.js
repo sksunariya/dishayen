@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiExternalLink } from 'react-icons/fi';
 
 const CourseCard = ({ course, index = 0 }) => {
   return (
@@ -39,11 +38,6 @@ const CourseCard = ({ course, index = 0 }) => {
             {course.title}
           </h3>
 
-          <div className="flex items-center justify-between">
-            <span className="px-4 py-2 bg-gradient-primary text-white text-sm font-semibold rounded-lg group-hover:shadow-neon transition-all flex items-center gap-2">
-              Buy Now <FiExternalLink className="w-4 h-4" />
-            </span>
-          </div>
         </div>
       </a>
     </motion.div>

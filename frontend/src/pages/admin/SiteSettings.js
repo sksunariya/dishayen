@@ -10,6 +10,7 @@ const SiteSettings = () => {
     address: '',
     email: '',
     phone: '',
+    workingHours: '',
     facebook: '',
     twitter: '',
     instagram: '',
@@ -339,6 +340,18 @@ const SiteSettings = () => {
                     value={contactInfo.phone}
                     onChange={(e) => setContactInfo(prev => ({ ...prev, phone: e.target.value }))}
                     placeholder="+1 (234) 567-890"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Working Hours
+                  </label>
+                  <input
+                    type="text"
+                    value={contactInfo.workingHours}
+                    onChange={(e) => setContactInfo(prev => ({ ...prev, workingHours: e.target.value }))}
+                    placeholder="Mon - Sat: 9AM - 6PM"
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-gray-900 dark:text-white"
                   />
                 </div>

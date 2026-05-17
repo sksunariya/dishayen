@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FiMail, FiPhone, FiMapPin, FiSend, FiMessageSquare,
-  FiClock, FiGlobe, FiFacebook, FiTwitter, FiInstagram, FiLinkedin
+import {
+  FiMail, FiPhone, FiMapPin, FiSend, FiMessageSquare, FiClock, FiGlobe
 } from 'react-icons/fi';
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -18,6 +17,13 @@ const Contact = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactSettings, setContactSettings] = useState({});
+
+  useEffect(() => {
+    api.get('/settings/contactInfo')
+      .then(res => { if (res.data?.value) setContactSettings(res.data.value); })
+      .catch(() => {});
+  }, []);
 
   // Autofill user data if logged in
   useEffect(() => {
@@ -71,34 +77,41 @@ const Contact = () => {
     }
   };
 
-  const contactInfo = [
-    {
+  const contactCards = [
+    contactSettings.email && {
       icon: FiMail,
       title: 'Email',
-      value: 'info@dishayencoaching.com',
-      link: 'mailto:info@dishayencoaching.com',
+      value: contactSettings.email,
+      link: `mailto:${contactSettings.email}`,
       color: 'text-blue-500'
     },
-    {
+    contactSettings.phone && {
       icon: FiPhone,
       title: 'Phone',
-      value: '+91 (555) 123-4567',
-      link: 'tel:+915551234567',
+      value: contactSettings.phone,
+      link: `tel:${contactSettings.phone.replace(/\s+/g, '')}`,
       color: 'text-green-500'
     },
-    {
+    contactSettings.address && {
       icon: FiMapPin,
       title: 'Location',
-      value: 'New Delhi, India',
+      value: contactSettings.address,
       color: 'text-red-500'
     },
-    {
+    contactSettings.workingHours && {
       icon: FiClock,
       title: 'Working Hours',
-      value: 'Mon - Sat: 9AM - 6PM',
+      value: contactSettings.workingHours,
       color: 'text-purple-500'
-    }
-  ];
+    },
+  ].filter(Boolean);
+
+  const socialLinks = [
+    contactSettings.facebook && { name: 'Facebook', icon: FaFacebookF, color: 'from-blue-600 to-blue-700', link: contactSettings.facebook },
+    contactSettings.twitter && { name: 'Twitter', icon: FaTwitter, color: 'from-sky-500 to-sky-600', link: contactSettings.twitter },
+    contactSettings.instagram && { name: 'Instagram', icon: FaInstagram, color: 'from-pink-600 to-purple-600', link: contactSettings.instagram },
+    contactSettings.linkedin && { name: 'LinkedIn', icon: FaLinkedinIn, color: 'from-blue-700 to-blue-800', link: contactSettings.linkedin },
+  ].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-dark-bg dark:via-dark-bg dark:to-dark-surface py-20">
@@ -128,7 +141,7 @@ const Contact = () => {
           >
             {/* Contact Cards */}
             <div className="grid sm:grid-cols-2 gap-6">
-              {contactInfo.map((info, index) => (
+              {contactCards.map((info, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -159,39 +172,36 @@ const Contact = () => {
             </div>
 
             {/* Social Links */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="glass-effect p-6 rounded-2xl border border-gray-200 dark:border-dark-border"
-            >
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <FiGlobe className="text-neon-blue" />
-                Follow Us On Social
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Stay connected with us on social media for updates, tips, and educational content.
-              </p>
-              <div className="flex gap-4">
-                {[
-                  { name: 'Facebook', icon: FaFacebookF, color: 'from-blue-600 to-blue-700', link: '#' },
-                  { name: 'Twitter', icon: FaTwitter, color: 'from-sky-500 to-sky-600', link: '#' },
-                  { name: 'Instagram', icon: FaInstagram, color: 'from-pink-600 to-purple-600', link: '#' },
-                  { name: 'LinkedIn', icon: FaLinkedinIn, color: 'from-blue-700 to-blue-800', link: '#' }
-                ].map((platform) => (
-                  <a
-                    key={platform.name}
-                    href={platform.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`p-3 bg-gradient-to-br ${platform.color} text-white rounded-lg hover:scale-110 hover:shadow-xl transition-all group`}
-                    title={platform.name}
-                  >
-                    <platform.icon className="w-5 h-5" />
-                  </a>
-                ))}
-              </div>
-            </motion.div>
+            {socialLinks.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="glass-effect p-6 rounded-2xl border border-gray-200 dark:border-dark-border"
+              >
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <FiGlobe className="text-neon-blue" />
+                  Follow Us On Social
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Stay connected with us on social media for updates, tips, and educational content.
+                </p>
+                <div className="flex gap-4">
+                  {socialLinks.map((platform) => (
+                    <a
+                      key={platform.name}
+                      href={platform.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`p-3 bg-gradient-to-br ${platform.color} text-white rounded-lg hover:scale-110 hover:shadow-xl transition-all group`}
+                      title={platform.name}
+                    >
+                      <platform.icon className="w-5 h-5" />
+                    </a>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Contact Form */}
